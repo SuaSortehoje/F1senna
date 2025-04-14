@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Corrida de Fórmula 1</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            color: white;
+            background-image: url('pista.jpeg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+        }
+        .divCentral {
+            width:100%;
+            height: 90vh;
+            overflow: hidden;
+            position: relative;   
+  background-image: url('pista.jpeg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;            
+        }
+        .divBtn {
+            display: flex;
+            justify-content: space-between;
+            
+            position: absolute;
+            bottom: 10px;
+            width: 90%;
+            padding: 0 20px;
+        }
+        button {
+        
+        background:green;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .carro {
+            width: 50px;
+            height: 80px;
+            background-color: red;
+            position: absolute;
+            bottom: 10px;
+        }
+        .obstaculo {
+            width: 50px;
+            height: 50px;
+            background-color: blue;
+            position: absolute;
+            top: -50px;
+              background-image: url('me.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;      
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 20px;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div class="divCentral" id="divCentral">
+        <div id="info">
+            Tempo: <span id="tempo">120</span>
+            Pontos: <span id="pontos">0</span>
+        </div>
+        <img src="f1.jpeg" class="carro" id="carro"></div>
+    </div>
+    <div class="divBtn">
+        <button onclick="moverEsquerda()">Esquerda</button>
+        <button onclick="moverDireita()">Direita</button>
+    </div>
+
+    <script>
+        const carro = document.getElementById("carro");
+        const divCentral = document.getElementById("divCentral");
+        const tempoSpan = document.getElementById("tempo");
+        const pontosSpan = document.getElementById("pontos");
+
+        let tempoDeJogo = 120;
+        let pontos = 0;
+        let timer;
+        let intervaloObstaculos;
+        let velocidadeQueda = 5;
+        let criandoGradualmente = false;
+
+        // Inicializa o carro no centro em pixels
+        let posXCarro = (divCentral.offsetWidth / 2) - 25;
+        carro.style.left = `${posXCarro}px`;
+
+        function moverEsquerda() {
+            if (posXCarro > 0) {
+                posXCarro -= 20;
+                carro.style.left = `${posXCarro}px`;
+            }
+        }
+
+        function moverDireita() {
+            const limite = divCentral.offsetWidth - carro.offsetWidth;
+            if (posXCarro < limite) {
+                posXCarro += 20;
+                carro.style.left = `${posXCarro}px`;
+            }
+        }
+
+        function verificarColisao(obstaculo) {
+            const carroRect = carro.getBoundingClientRect();
+            const obstaculoRect = obstaculo.getBoundingClientRect();
+            return (
+                carroRect.left < obstaculoRect.right &&
+                carroRect.right > obstaculoRect.left &&
+                carroRect.top < obstaculoRect.bottom &&
+                carroRect.bottom > obstaculoRect.top
+            );
+        }
+
+        function criarObstaculo() {
+            let obstaculo = document.createElement("div");
+            obstaculo.classList.add("obstaculo");
+            obstaculo.style.left = `${Math.random() * (divCentral.offsetWidth - 50)}px`;
+            divCentral.appendChild(obstaculo);
+
+            let topPos = -50;
+            let queda = setInterval(() => {
+                topPos += velocidadeQueda;
+                obstaculo.style.top = `${topPos}px`;
+
+                if (verificarColisao(obstaculo)) {
+                    clearInterval(queda);
+                    alert("Você perdeu! Colidiu com um obstáculo.");
+                    location.reload();
+                }
+
+                if (topPos > window.innerHeight) {
+                    clearInterval(queda);
+                    obstaculo.remove();
+                    pontos += 10;
+                    pontosSpan.textContent = pontos;
+                    verificarProgresso();
+                }
+            }, 30);
+        }
+
+        let ultimosMilPontos = 0;
+
+function verificarProgresso() {
+    if (pontos - ultimosMilPontos >= 1000) {
+        tempoDeJogo = 120;
+        velocidadeQueda += 1; // opcional: aumenta a dificuldade
+        ultimosMilPontos = pontos;
+        iniciarContador();
+    } else if (pontos >= 500 && !criandoGradualmente) {
+        tempoDeJogo = 120;
+        velocidadeQueda = 10;
+        criandoGradualmente = true;
+        iniciarContador();
+        aumentarGradualmente();
+    } else if (pontos >= 400 && tempoDeJogo > 60) {
+        tempoDeJogo = 60;
+        velocidadeQueda = 7;
+        iniciarContador();
+    } else if (pontos >= 200 && tempoDeJogo > 90) {
+        tempoDeJogo = 90;
+        velocidadeQueda = 6;
+        iniciarContador();
+    }
+}
+
+        function iniciarContador() {
+            clearInterval(timer);
+            tempoSpan.textContent = tempoDeJogo;
+            timer = setInterval(() => {
+                tempoDeJogo--;
+                tempoSpan.textContent = tempoDeJogo;
+
+                if (tempoDeJogo <= 0) {
+                    clearInterval(timer);
+                    clearInterval(intervaloObstaculos);
+                    alert("Tempo esgotado!");
+                    location.reload();
+                }
+            }, 1000);
+        }
+
+        function aumentarGradualmente() {
+            let aumento = setInterval(() => {
+                if (velocidadeQueda < 20) {
+                    velocidadeQueda += 1;
+                } else {
+                    clearInterval(aumento);
+                }
+            }, 5000);
+        }
+
+        function iniciarJogo() {
+            iniciarContador();
+            intervaloObstaculos = setInterval(criarObstaculo, 1000);
+        }
+
+        window.onload = iniciarJogo;
+    </script>
+</body>
+</html>
